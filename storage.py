@@ -5,7 +5,7 @@ storage.py — SQLite baza za praćenje viđenih oglasa.
 import sqlite3
 import hashlib
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 from config import DB_PATH
 
@@ -20,12 +20,14 @@ class JobListing:
     salary: Optional[str] = None
     source: str = ""
     profile: str = ""
-    # "english_ok" | "german_required" | "german_preferred" | "unknown"
     language_req: str = "unknown"
 
 
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH) if os.path.dirname(DB_PATH) else ".", exist_ok=True)
+    """Kreira bazu i tabelu ako ne postoje. Pozovi uvijek prije filter_new."""
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS seen_jobs (
@@ -48,6 +50,8 @@ def _job_hash(job: JobListing) -> str:
 
 
 def filter_new(jobs: list[JobListing]) -> list[JobListing]:
+    """Vrati samo oglase koje još nismo vidjeli, i odmah ih upiši."""
+    # init_db() ovdje kao sigurnosna mreža — ne košta ništa ako tabela postoji
     init_db()
     new_jobs = []
     with sqlite3.connect(DB_PATH) as conn:
@@ -61,7 +65,8 @@ def filter_new(jobs: list[JobListing]) -> list[JobListing]:
                 conn.execute(
                     "INSERT INTO seen_jobs (hash, title, company, url, source, profile, language_req) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (h, job.title, job.company, job.url, job.source, job.profile, job.language_req)
+                    (h, job.title, job.company, job.url,
+                     job.source, job.profile, job.language_req)
                 )
         conn.commit()
     return new_jobs
