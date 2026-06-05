@@ -1,6 +1,6 @@
 """
 notifier.py — Šalje Telegram poruku za svaki novi oglas.
-Formatira karticu sa svim relevantnim informacijama.
+Koristi plain text umjesto MarkdownV2 da izbjegne escape probleme.
 """
 
 import logging
@@ -9,7 +9,6 @@ from storage import JobListing
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, JOB_PROFILES
 
 logger = logging.getLogger(__name__)
-
 TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
 
@@ -18,42 +17,41 @@ def _format_message(job: JobListing) -> str:
     emoji   = profile.get("emoji", "📋")
     label   = profile.get("label", job.profile)
 
-    loc_line = f"📍 {job.location}" if job.location else "📍 Lokacija nije navedena"
-    sal_line = f"💰 {job.salary}" if job.salary else ""
-    desc_line = f"\n_{job.description[:200]}..._" if job.description else ""
-
     lines = [
-        f"{emoji} *{_esc(job.title)}*",
-        f"🏢 {_esc(job.company)}",
-        loc_line,
+        f"{emoji} {job.title}",
+        f"🏢 {job.company}",
     ]
-    if sal_line:
-        lines.append(sal_line)
-    lines += [
-        f"🏷 {label}  |  📡 {_esc(job.source)}",
-        desc_line,
-        f"\n[Pogledaj oglas]({job.url})",
-    ]
-    return "\n".join(filter(None, lines))
 
+    if job.location:
+        lines.append(f"📍 {job.location}")
 
-def _esc(text: str) -> str:
-    """Escape Markdown V2 specijalni znakovi."""
-    for ch in r"_*[]()~`>#+-=|{}.!\\":
-        text = text.replace(ch, f"\\{ch}")
-    return text
+    if job.salary:
+        lines.append(f"💰 {job.salary}")
+
+    lines.append(f"🏷 {label}  |  📡 {job.source}")
+
+    if job.description:
+        desc = job.description[:200].strip()
+        lines.append(f"\n{desc}...")
+
+    lines.append(f"\n🔗 {job.url}")
+
+    return "\n".join(lines)
 
 
 def send_job(job: JobListing) -> bool:
-    """Pošalji jednu Telegram poruku. Vrati True na uspjeh."""
+    """Pošalji jednu Telegram poruku. Plain text, bez Markdown."""
     payload = {
-        "chat_id":    TELEGRAM_CHAT_ID,
-        "text":       _format_message(job),
-        "parse_mode": "MarkdownV2",
+        "chat_id":                  TELEGRAM_CHAT_ID,
+        "text":                     _format_message(job),
         "disable_web_page_preview": False,
     }
     try:
-        resp = requests.post(f"{TELEGRAM_API}/sendMessage", json=payload, timeout=10)
+        resp = requests.post(
+            f"{TELEGRAM_API}/sendMessage",
+            json=payload,
+            timeout=10,
+        )
         if resp.status_code == 200:
             logger.info(f"Telegram OK: {job.title}")
             return True
@@ -66,17 +64,13 @@ def send_job(job: JobListing) -> bool:
 
 
 def send_summary(new_count: int, total_seen: int):
-    """Pošalji kratki summary nakon svakog ciklusa (opcionalno)."""
+    """Kratki summary nakon ciklusa — samo ako ima novih oglasa."""
     if new_count == 0:
-        return   # ne uznemiravaj ako nema novosti
-    text = (
-        f"✅ Pronađeno *{new_count}* novih oglasa\\!\n"
-        f"📊 Ukupno viđenih: {total_seen}"
-    )
+        return
+    text = f"✅ Poslano {new_count} novih oglasa! Ukupno viđenih: {total_seen}"
     requests.post(f"{TELEGRAM_API}/sendMessage", json={
-        "chat_id":    TELEGRAM_CHAT_ID,
-        "text":       text,
-        "parse_mode": "MarkdownV2",
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text":    text,
     }, timeout=10)
 
 
