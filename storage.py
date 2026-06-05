@@ -1,12 +1,11 @@
 """
 storage.py — SQLite baza za praćenje viđenih oglasa.
-Sprječava duplikate između pokretanja.
 """
 
 import sqlite3
 import hashlib
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from config import DB_PATH
 
@@ -20,7 +19,9 @@ class JobListing:
     description: str = ""
     salary: Optional[str] = None
     source: str = ""
-    profile: str = ""   # "junior_dev" ili "network_medior"
+    profile: str = ""
+    # "english_ok" | "german_required" | "german_preferred" | "unknown"
+    language_req: str = "unknown"
 
 
 def init_db():
@@ -28,13 +29,14 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS seen_jobs (
-                hash        TEXT PRIMARY KEY,
-                title       TEXT,
-                company     TEXT,
-                url         TEXT,
-                source      TEXT,
-                profile     TEXT,
-                seen_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                hash         TEXT PRIMARY KEY,
+                title        TEXT,
+                company      TEXT,
+                url          TEXT,
+                source       TEXT,
+                profile      TEXT,
+                language_req TEXT DEFAULT 'unknown',
+                seen_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         conn.commit()
@@ -46,7 +48,6 @@ def _job_hash(job: JobListing) -> str:
 
 
 def filter_new(jobs: list[JobListing]) -> list[JobListing]:
-    """Vrati samo oglase koje još nismo vidjeli, i odmah ih upiši."""
     init_db()
     new_jobs = []
     with sqlite3.connect(DB_PATH) as conn:
@@ -58,9 +59,9 @@ def filter_new(jobs: list[JobListing]) -> list[JobListing]:
             if not exists:
                 new_jobs.append(job)
                 conn.execute(
-                    "INSERT INTO seen_jobs (hash, title, company, url, source, profile) "
-                    "VALUES (?, ?, ?, ?, ?, ?)",
-                    (h, job.title, job.company, job.url, job.source, job.profile)
+                    "INSERT INTO seen_jobs (hash, title, company, url, source, profile, language_req) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (h, job.title, job.company, job.url, job.source, job.profile, job.language_req)
                 )
         conn.commit()
     return new_jobs
