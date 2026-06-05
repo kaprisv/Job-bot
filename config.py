@@ -56,9 +56,33 @@ RSS_FEEDS = []
 SCRAPE_TARGETS = [
     {
         "name": "HelloWorld.rs",
-        "url":  "https://helloworld.rs/oglasi",
+        "url":  "https://www.helloworld.rs/oglasi-za-posao",
         "type": "helloworld",
         "profiles": ["junior_dev", "network_medior"],
+    },
+    {
+        "name": "Zaposli.me — developer",
+        "url":  "https://zaposli.me/oglasi-za-posao?keyword=developer",
+        "type": "zaposli",
+        "profiles": ["junior_dev"],
+    },
+    {
+        "name": "Zaposli.me — network",
+        "url":  "https://zaposli.me/oglasi-za-posao?keyword=network+administrator",
+        "type": "zaposli",
+        "profiles": ["network_medior"],
+    },
+    {
+        "name": "LinkedIn — Junior Dev",
+        "url":  "https://www.linkedin.com/jobs/search/?f_E=2&f_WT=2&keywords=junior+developer&location=Serbia",
+        "type": "linkedin",
+        "profiles": ["junior_dev"],
+    },
+    {
+        "name": "LinkedIn — Network",
+        "url":  "https://www.linkedin.com/jobs/search/?f_E=3&keywords=network+engineer&location=Serbia",
+        "type": "linkedin",
+        "profiles": ["network_medior"],
     },
     {
         "name": "Infostud — developer",

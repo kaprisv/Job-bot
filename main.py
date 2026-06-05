@@ -7,7 +7,6 @@ import logging
 import time
 import sys
 
-from config import CHECK_INTERVAL_MINUTES
 from scraper import fetch_all
 from storage import filter_new, seen_count, init_db
 from ai_filter import filter_relevant

@@ -24,7 +24,8 @@ GERMAN_REQUIRED_PATTERNS = [
     r"\bgerman.*(?:required|mandatory|must|zwingend|erforderlich)\b",
     r"\b(?:required|mandatory|must).*german\b",
     r"\bmuttersprachlich\b",
-    r"\bc1\b", r"\bc2\b",                 # visoki nivoi = obavezno
+    r"\b(?:german|deutsch).*\bc[12]\b",   # C1/C2 samo uz german/deutsch kontekst
+    r"\bc[12]\b.*(?:german|deutsch)",
     r"\bsprachkenntnisse.*deutsch\b",
     r"\bdeutsch.*(?:b2|c1|c2|fließend|verhandlungssicher|konversationssicher)\b",
     r"\b(?:b2|c1|c2|fließend).*deutsch\b",
@@ -40,7 +41,8 @@ GERMAN_PREFERRED_PATTERNS = [
     r"\bdeutsch.*(?:von vorteil|wünschenswert|optional|plus)\b",
     r"\bgerman skills? (?:are )?(?:a )?plus\b",
     r"\bbasic german\b",
-    r"\ba1\b", r"\ba2\b", r"\bb1\b",      # niži nivoi = nije kritično
+    r"\b(?:german|deutsch).*\b[ab][12]\b",  # A1/A2/B1 samo uz german/deutsch kontekst
+    r"\b[ab][12]\b.*(?:german|deutsch)",
 ]
 
 # Eksplicitni signali da je ENGLESKI DOVOLJAN
