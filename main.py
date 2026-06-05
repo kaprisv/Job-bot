@@ -11,6 +11,7 @@ from scraper import fetch_all
 from storage import filter_new, seen_count, init_db
 from ai_filter import filter_relevant
 from language_check import enrich_jobs
+from cv_match import enrich_with_match
 from notifier import send_job, send_summary, test_connection
 
 logging.basicConfig(
@@ -43,6 +44,9 @@ def run_cycle():
 
     relevant_jobs = enrich_jobs(relevant_jobs)
 
+    # CV match analiza — jedan API poziv po oglasu, samo ako ima ANTHROPIC_API_KEY
+    match_results = enrich_with_match(relevant_jobs)
+
     lang_stats = {}
     for job in relevant_jobs:
         lang_stats[job.language_req] = lang_stats.get(job.language_req, 0) + 1
@@ -50,7 +54,10 @@ def run_cycle():
 
     sent = 0
     for job in relevant_jobs:
-        if send_job(job):
+        match = match_results.get(job.url)
+        if match:
+            logger.info(f"Match score [{job.title[:40]}]: {match.score}%")
+        if send_job(job, match):
             sent += 1
         time.sleep(0.5)
 
